@@ -1,0 +1,12 @@
+# BI Hierarchies
+
+### Logistic Hierarchy
+Created to enable drill-down in BI dashboards:
+- **Country → Region → City → Customer (Id)**
+
+This allows users to start from a high-level country view and drill down to individual customer-level analytics.
+
+---
+
+### Screenshot
+![Logistic Hierarchy](Images/bi-hierarchy-logistics.png)

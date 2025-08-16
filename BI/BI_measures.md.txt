@@ -1,0 +1,20 @@
+# BI Measures
+
+### Implemented Measures
+1. **Order Number Distinct Count**  
+   - Counts unique order numbers across the dataset.
+
+2. **Cancel Percentage**  
+   - Formula:  
+     \[
+     \text{Cancel %} = \frac{\text{Orders with StatusCode = 3}}{\text{Total Orders}}
+     \]
+
+---
+
+### Screenshots
+- **Distinct Count**  
+  ![Distinct Count](Images/bi-measure-distinct-count.png)
+
+- **Cancel Percentage**  
+  ![Cancel %](Images/bi-measure-cancel-percentage.png)

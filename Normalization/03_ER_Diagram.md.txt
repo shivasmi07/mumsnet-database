@@ -1,0 +1,12 @@
+# ER Diagram
+
+The final schema after applying 3NF resulted in 9 tables, connected as follows:
+
+- **CustomerCity** → linked to **Customer**  
+- **Product** → linked to **Variant** and **VariantProductGroup**  
+- **Order** → linked to **OrderItem** and **Customer**  
+
+Diagram:  
+![ER Diagram](imgages/er-diagram.png)
+
+This structure removes redundancy and provides a strong foundation for BI and reporting.

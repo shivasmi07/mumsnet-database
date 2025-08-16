@@ -1,0 +1,140 @@
+--------------1. PRE-PROCESSING; CHECKING NULL AND EMPTY SPACES--------
+
+SELECT *
+FROM CustomerCity
+WHERE Id IS NULL
+    OR Gender IS NULL OR Gender = ''
+    OR FirstName IS NULL OR FirstName = ''
+    OR LastName IS NULL OR LastName = ''
+    OR DateRegistered IS NULL
+    OR City IS NULL OR City = ''
+    OR County IS NULL OR County = ''
+    OR Region IS NULL OR Region = ''
+    OR Country IS NULL OR Country = '';
+
+SELECT * 
+FROM Product
+WHERE ProductGroup = '' OR ProductGroup IS NULL
+	OR ProductCode = '' OR ProductCode  IS NULL
+    OR VariantCode = '' OR VariantCode IS NULL
+	OR Name = '' OR Name IS NULL
+	OR Cup = '' OR Cup  IS NULL
+    OR Size = '' OR Size IS NULL
+	OR LegLength = '' OR LegLength  IS NULL
+    OR Colour = '' OR Colour IS NULL
+	OR Price = '' OR Price  IS NULL
+	OR Features = '' OR Features  IS NULL
+    OR Description = '' OR Description IS NULL
+
+*PRODUCT TABLE HAS SOME NULL VALUES AND EMPTY SPCAES THEREFORE, WE ARE REPLACES THEM RESPECTIVELY*
+
+UPDATE product
+SET 
+    Cup = COALESCE(NULLIF(Cup, ''), 'Unassigned'),
+    LegLength = COALESCE(NULLIF(LegLength, ''), 'Unknown'),
+    Size = COALESCE(NULLIF(Size, ''), 'Not Known'),
+    Colour = COALESCE(NULLIF(Colour, ''), 'Not Given'),
+	Features = COALESCE(NULLIF(Features, ''), 'Features unassigned'),
+	Description = COALESCE(NULLIF(Description, ''), 'Description unassigned');	
+
+*RECHECKING THE PRODUCT TABLE FOR NULL AND EMPTY SPACES AFTER REPLACING THEM*
+
+SELECT * 
+FROM Product
+WHERE ProductGroup = '' OR ProductGroup IS NULL
+	OR ProductCode = '' OR ProductCode  IS NULL
+    OR VariantCode = '' OR VariantCode IS NULL
+	OR Name = '' OR Name IS NULL
+	OR Cup = '' OR Cup  IS NULL
+    OR Size = '' OR Size IS NULL
+	OR LegLength = '' OR LegLength  IS NULL
+    OR Colour = '' OR Colour IS NULL
+	OR Price = '' OR Price  IS NULL
+	OR Features = '' OR Features  IS NULL
+    OR Description = '' OR Description IS NULL
+
+SELECT * 
+FROM OrderItem
+WHERE OrderNumber = '' OR OrderNumber IS NULL
+	OR OrderCreateDate = '' OR OrderCreateDate  IS NULL
+    OR OrderCreateDate = '' OR OrderCreateDate IS NULL
+	OR OrderStatusCode = '' OR OrderStatusCode IS NULL
+	OR CustomerCityId = '' OR CustomerCityId  IS NULL
+    OR BillingCurrency = '' OR BillingCurrency IS NULL
+	OR ProductGroup = '' OR ProductGroup  IS NULL
+    OR ProductCode = '' OR ProductCode IS NULL
+	OR VariantCode = '' OR VariantCode  IS NULL
+	OR Quantity = '' OR Quantity  IS NULL
+    OR UnitPrice = '' OR UnitPrice IS NULL
+	OR LineItemTotal = '' OR LineItemTotal IS NULL
+
+--------------------------------------------------1 NF TO CHECK PRIMARY KEY AND 2NF TO CHECK PARTIAL DEPENDENCY ---------------------------
+SELECT DISTINCT ID , Count (*) AS count_ID
+FROM CustomerCity
+group by Id
+having count(*) = 1;
+
+SELECT DISTINCT ProductGroup, Count (*) AS count_ID
+FROM Product
+group by ProductGroup
+having count(*) = 1; 
+
+SELECT DISTINCT VariantCode , Count (*) AS count_ID
+FROM Product
+group by VariantCode
+having count(*) = 1;
+
+*SINCE BOTH PRODUCT FROUP AND VARIANT GROUP ARE NOT UNIQUE, ALSO ALMOST EVERY-COLUMN IN PRODUCT IS PARTIALLY DEPENDING ON THEM; THEREFORE WE MADE COMPOSITE KEY FROM THEM. *
+
+SELECT DISTINCT VariantCode , ProductGroup, Count (*) AS count_ID
+FROM Product
+group by VariantCode, ProductGroup
+having count(*) = 1;
+
+SELECT DISTINCT OrderItemNumber, Count (*) AS count_ID
+FROM OrderItem
+group by OrderItemNumber
+having count(*) = 1;
+
+---------------------CREATING TABLE FOR ORDER ITEM--------------------------
+------CREATING TABLE--------------- 
+
+CREATE TABLE OrderTable (
+    OrderCreatedDate DATETIME NOT NULL,
+    OrderNumber NVARCHAR(255) PRIMARY KEY NOT NULL,
+    OrderStatusCode INT NOT NULL,
+    CustomerCityId BIGINT NOT NULL
+);
+----------------INSERT VALUES--------------------
+INSERT INTO OrderTable (OrderCreatedDate,OrderNumber, OrderStatusCode, CustomerCityId)
+SELECT DISTINCT OrderCreateDate,OrderNumber, OrderStatusCode, CustomerCityId
+FROM OrderItem;
+
+----------CHECKING DATATYPES----------------------
+SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'OrderTable' ;
+
+-----------------second TABLE-----------------
+-----------------CREATING TABLE-----------------
+
+CREATE TABLE OrderItemTable (
+    OrderItemNumber NVARCHAR(255) PRIMARY KEY NOT NULL,
+	OrderNumber NVARCHAR(255) NOT NULL,
+	BillingCurrency NVARCHAR(255) NOT NULL,
+	ProductGroup NVARCHAR(255) NOT NULL,
+	VariantCode NVARCHAR(255) NOT NULL,
+	Quantity INT NOT NULL,
+	UnitPrice MONEY NOT NULL,
+	LineItemTotal MONEY NOT NULL,
+);
+
+-----------INSERTING VALUES--------------------
+INSERT INTO OrderItemTable (OrderItemNumber, OrderNumber,BillingCurrency, ProductGroup,VariantCode,Quantity,UnitPrice,LineItemTotal)
+SELECT DISTINCT OrderItemNumber, OrderNumber,BillingCurrency, ProductGroup,VariantCode,Quantity,UnitPrice,LineItemTotal
+FROM OrderItem;
+
+--------------CHECKING DATA TYPES-----------------
+SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'OrderItemTable' ;

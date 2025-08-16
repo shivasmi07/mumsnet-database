@@ -1,0 +1,141 @@
+USE AssignmentPart1
+
+
+ALTER PROCEDURE prCreateOrderGroup
+    @OrderNumber NVARCHAR(32),
+    @OrderCreateDate DATETIME2(3),
+    @CustomerCityId BIGINT
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        
+        -- Validate OrderNumber format inside the TRY block
+        IF @OrderNumber NOT LIKE 'OR\[0-3][0-9][0-1][0-9][0-9][0-9][0-9][0-9]\[0-9][0-9]'
+        BEGIN
+            THROW 50002, 'Invalid SalesOrderNumber format. Expected format: OR\DDMMYYYY\NN.', 1;
+        END
+        
+        -----------Insert the new order---------
+        INSERT INTO OrderTable (OrderNumber, OrderCreateDate, CustomerId)
+        VALUES (@OrderNumber, @OrderCreateDate, @CustomerCityId);
+        
+        ---------Commit the transaction---------
+        COMMIT TRANSACTION;
+        PRINT 'Order created.';
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+
+        PRINT 'Error: ' + ERROR_MESSAGE();
+        PRINT 'Error Number: ' + CAST(ERROR_NUMBER() AS NVARCHAR);
+        PRINT 'Error State: ' + CAST(ERROR_STATE() AS NVARCHAR);
+        PRINT 'Error Line: ' + CAST(ERROR_LINE() AS NVARCHAR);
+
+        -- Re-throw the error---
+        THROW;
+    END CATCH;
+END;
+
+------------------------------------------------------------------------------------
+
+CREATE PROCEDURE prCreateOrderItem
+    @OrderNumber NVARCHAR(32),
+    @OrderItemNumber NVARCHAR(32),
+    @ProductGroup NVARCHAR(128),
+    @ProductCode NVARCHAR(255),
+    @VariantCode NVARCHAR(255),
+    @Quantity INT,
+    @UnitPrice MONEY
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Validate OrderNumber format inside the TRY block
+        IF @OrderNumber NOT LIKE 'OR\\[0-3][0-9][0-1][0-9][0-9][0-9][0-9][0-9]\\[0-9][0-9]'
+        BEGIN
+            THROW 50002, 'Invalid SalesOrderNumber format. Expected format: OR\DDMMYYYY\NN.', 1;
+        END
+
+        -- Validate that the VariantCode exists in the Variant table inside the TRY block
+        IF NOT EXISTS (SELECT 1 FROM Variant WHERE VariantCode = @VariantCode)
+        BEGIN
+            THROW 50001, 'The VariantCode does not exist.', 1;
+        END
+
+        -- Check if the OrderNumber already exists in the OrderTable inside the TRY block
+        IF EXISTS (SELECT 1 FROM OrderTable WHERE OrderNumber = @OrderNumber)
+        BEGIN
+            THROW 50008, 'The OrderNumber already exists. Please choose a unique OrderNumber.', 1;
+        END
+
+        -- Calculate the LineItemTotal inside the TRY block
+        DECLARE @LineItemTotal MONEY;
+        SET @LineItemTotal = @Quantity * @UnitPrice;
+
+        -- Insert the new order item into OrderItemTable inside the TRY block
+        INSERT INTO OrderItemTable (OrderItemNumber, OrderNumber, BillingCurrency, ProductGroup, VariantCode, Quantity, UnitPrice, LineItemTotal)
+        VALUES (@OrderItemNumber, @OrderNumber, 'GBP', @ProductGroup, @VariantCode, @Quantity, @UnitPrice, @LineItemTotal);
+
+        -- Commit the transaction
+        COMMIT TRANSACTION;
+        PRINT 'Order item created.';
+    END TRY
+    BEGIN CATCH
+        -- Rollback transaction in case of error
+        ROLLBACK TRANSACTION;
+
+        -- Print error details
+        PRINT 'Error: ' + ERROR_MESSAGE();
+        PRINT 'Error Number: ' + CAST(ERROR_NUMBER() AS NVARCHAR);
+        PRINT 'Error State: ' + CAST(ERROR_STATE() AS NVARCHAR);
+        PRINT 'Error Line: ' + CAST(ERROR_LINE() AS NVARCHAR);
+
+        -- Re-throw the error
+        THROW;
+    END CATCH;
+END;
+
+----------------------------------------------------------------------------------------
+--------------------------testing queries----------------------------------
+
+------------------valid query for order number-------------
+EXEC prCreateOrderGroup 
+    @OrderNumber = 'OR\12112024\01',  -- Valid order number format
+    @OrderCreateDate = '2024-11-12T12:34:56', 
+    @CustomerCityId = 1;
+
+
+------INVALID QUERY FOR ORDER NUMBER ---------------
+	EXEC prCreateOrderGroup 
+    @OrderNumber = 'OR\21112024',  -- Valid order number format
+    @OrderCreateDate = '2024-11-21T12:34:56', 
+    @CustomerCityId = 1;
+-----------------------------------------------------
+EXEC prCreateOrderItem 
+    @OrderNumber = 'OR\21112024\01',         -- Valid order number format
+	@OrderItemNumber = 'OR\21112024\01\01',         -- Valid order number format
+    @ProductGroup = 'Clothing',               -- Specify product group
+    @ProductCode = 'PROD001',                 -- Specify product code
+    @VariantCode = '330340',                  -- Specify variant code
+    @Quantity = 2,                            -- Specify quantity
+    @UnitPrice = 50.00;                       -- Specify unit price
+---------INVALID QUERY FOR VARIANT CODE 
+	EXEC prCreateOrderItem 
+    @OrderNumber = 'OR\21112024\01',         -- Valid order number format
+	@OrderItemNumber = 'OR\21112024\01\01',         -- Valid order number format
+    @ProductGroup = 'Clothing',               -- Specify product group
+    @ProductCode = 'PROD001',                 -- Specify product code
+    @VariantCode = 'VAR001',                  -- Specify variant code
+    @Quantity = 2,                            -- Specify quantity
+    @UnitPrice = 50.00;                       -- Specify unit price
+---------ERROR THROWN WHEN EXISTENT ORDER NUMBER-----
+	EXEC prCreateOrderItem 
+    @OrderNumber = 'OR\03092008\14',         -- Valid order number format
+	@OrderItemNumber = 'OR\21112024\01\01',         -- Valid order number format
+    @ProductGroup = 'Clothing',               -- Specify product group
+    @ProductCode = 'PROD001',                 -- Specify product code
+    @VariantCode = '330340',                  -- Specify variant code
+    @Quantity = 2,                            -- Specify quantity
+    @UnitPrice = 50.00;                       -- Specify unit price

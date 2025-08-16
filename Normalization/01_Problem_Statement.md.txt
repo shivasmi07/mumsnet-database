@@ -1,0 +1,16 @@
+# Problem Statement
+
+The initial dataset contained three denormalized tables:
+
+- **CustomerCity** – stored customer information with location details.  
+- **Product** – stored product information including variants, size, color, etc.  
+- **OrderItem** – stored items purchased by customers.  
+
+### Issues in Original Design
+- Redundant and repeated data across rows.  
+- Partial dependencies within the Product table.  
+- Risk of data inconsistency when updating records.  
+- Difficulties in scaling queries for analytics and BI.  
+
+### Goal
+Normalize the database to eliminate redundancy, ensure data integrity, and make the schema suitable for transactional consistency as well as BI reporting.

@@ -1,0 +1,28 @@
+# Business Intelligence Overview
+
+### BI Components
+- **Cube (.cube)** – defines measures, hierarchies, KPIs.  
+- **Dimensions (.dim)** – define descriptive attributes (CustomerCity, Product, Date, etc.).  
+- **Data Source View (.dsv)** – logical schema used in cube design.  
+- **Partitions** – manage data loading and performance.  
+
+---
+
+### Cube Design
+- Fact Table: **OrderItem**  
+- Dimension Tables: **CustomerCity, Product, Date**  
+- Relationships modeled in a **star schema**.  
+
+Diagram:  
+![Cube Design](imgages/bi-star-schema-cube-design.png)
+
+---
+
+### Dashboards
+Power BI dashboards were built on top of the cube, enabling:  
+- Sales trends over time  
+- Cancellation rates  
+- Regional drilldowns  
+
+ See measures in [`bi-measures.md`](bi-measures.md).  
+ See hierarchies in [`bi-hierarchies.md`](bi-hierarchies.md).

@@ -1,0 +1,23 @@
+# Transaction Management & Error Handling
+
+### Key Concepts
+- **BEGIN** → start a transaction block.  
+- **COMMIT** → save all changes if successful.  
+- **ROLLBACK** → undo all changes on error.  
+- **TRY / CATCH** → handle runtime errors.  
+- **THROW** → raise custom errors.
+
+---
+
+### Implementation
+- **Order creation** handled in `prCreateOrderGroup`.  
+- **Order items** handled in `prCreateOrderItem`.  
+
+#### Example Scenarios
+- If `OrderNumber` already exists → **rollback + error message**.  
+- If `VariantCode` does not exist → **rollback + error message**.  
+
+---
+
+### Transaction Flow
+![Transaction Flow](Imgages/Flow-Execution.png)

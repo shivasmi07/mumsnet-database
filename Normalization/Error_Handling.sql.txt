@@ -1,0 +1,140 @@
+USE AssignmentPart1
+
+----------------FOR ORDER GROUP----------------------
+
+CREATE PROCEDURE prCreateOrderGroup
+    @OrderNumber NVARCHAR(32),
+    @OrderCreateDate DATETIME2(3),
+    @CustomerCityId BIGINT
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        
+        -----------Insert the new order---------
+        INSERT INTO OrderTable (OrderNumber, OrderCreateDate, CustomerId)
+        VALUES (@OrderNumber, @OrderCreateDate, @CustomerCityId);
+        
+        ---------Commit the transaction---------
+        COMMIT TRANSACTION;
+        
+        PRINT 'Order created.';
+    END TRY
+    BEGIN CATCH
+    ROLLBACK TRANSACTION;
+
+    PRINT 'Error: ' + ERROR_MESSAGE();
+    PRINT 'Error Number: ' + CAST(ERROR_NUMBER() AS NVARCHAR);
+    PRINT 'Error State: ' + CAST(ERROR_STATE() AS NVARCHAR);
+    PRINT 'Error Line: ' + CAST(ERROR_LINE() AS NVARCHAR);
+
+    --Re-throw the error---
+    THROW;
+	END CATCH;
+END;
+
+-----------------GO TO DATABASE THEN PROGRAMMABILITY AND CHECK FOR ORDERGROUP IF IT IS CREATED SUCCESSFULLY OR NOT---------------
+
+-----------------FOR ORDERITEM------------------------
+
+CREATE PROCEDURE prCreateOrderItem
+    @OrderNumber NVARCHAR(32),
+    @OrderItemNumber NVARCHAR(32),
+    @ProductGroup NVARCHAR(128),
+    @ProductCode NVARCHAR(255),
+    @VariantCode NVARCHAR(255),
+    @Quantity INT,
+    @UnitPrice MONEY
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        
+        -- Validate that the VariantCode exists in the Variant table
+        IF NOT EXISTS (SELECT 1 FROM Variant WHERE VariantCode = @VariantCode)
+        BEGIN
+            THROW 50001, 'The VariantCode does not exist.', 1;
+        END
+        
+        -- Calculate the LineItemTotal
+        DECLARE @LineItemTotal MONEY;
+        SET @LineItemTotal = @Quantity * @UnitPrice;
+        
+        -- Insert the new order item into OrderItemTable
+        INSERT INTO OrderItemTable (OrderItemNumber, OrderNumber, BillingCurrency, ProductGroup, VariantCode, Quantity, UnitPrice, LineItemTotal)
+        VALUES (@OrderItemNumber, @OrderNumber, 'USD', @ProductGroup, @VariantCode, @Quantity, @UnitPrice, @LineItemTotal);
+        
+        -- Commit the transaction
+        COMMIT TRANSACTION;
+        
+        PRINT 'Order item created.';
+    END TRY
+    BEGIN CATCH
+    ROLLBACK TRANSACTION;
+
+    PRINT 'Error: ' + ERROR_MESSAGE();
+    PRINT 'Error Number: ' + CAST(ERROR_NUMBER() AS NVARCHAR);
+    PRINT 'Error State: ' + CAST(ERROR_STATE() AS NVARCHAR);
+    PRINT 'Error Line: ' + CAST(ERROR_LINE() AS NVARCHAR);
+
+    ---------------Re-throw the error ---------
+    THROW;
+	END CATCH;
+END;
+
+--------------------------------------------------------------------------------------
+--------------------------GO TO DATABASE THEN PROGRAMMABILITY AND CHECK FOR ORDER ITEM IF IT IS CREATED SUCCESSFULLY OR NOT--------------------
+
+*Create an index on OrderTable for efficient retrieval*
+
+CREATE NONCLUSTERED INDEX idx_OrderTable_OrderNumber ON OrderTable(OrderNumber);
+
+*Create an index on Order Item for efficient retrieval*
+CREATE NONCLUSTERED INDEX idx_OrderItemTable_OrderNumber ON OrderItemTable(OrderNumber);
+CREATE NONCLUSTERED INDEX idx_OrderItemTable_VariantCode ON OrderItemTable(VariantCode);
+
+#First Three indices are already made at the time of table creation.
+#Below index (Productgroup) is to be made.  
+
+CREATE NONCLUSTERED INDEX idx_OrderItemTable_ProductGroup ON OrderItemTable(ProductGroup);
+
+--------------------------------------GO TO DATABASE THEN PROGRAMMABILITY AND CHECK FOR INDICIS IF IT IS CREATED SUCCESSFULLY OR NOT-----------
+
+-----------------TESTING---------------------
+#FOR ORDER GROUP 
+
+EXEC prCreateOrderGroup 
+    @OrderNumber = 'ORD12345',
+    @OrderCreateDate = '2024-11-21T12:34:56',
+    @CustomerCityId = 1;
+
+-----------------ERROR SCENARIO--------------
+*Order number should be varchar, we changed it as float just to see how it look likes for error scenarios.*
+
+EXEC prCreateOrderGroup 
+    @OrderNumber = 1234.55432,  
+    @OrderCreateDate = '2024-11-21T12:34:56',
+    @CustomerCityId = 10000000000; -- Assuming 9999 is an invalid Customer ID
+------------ORDERITEM TESTING---------------
+EXEC prCreateOrderItem 
+    @OrderNumber = 'ORD12345',
+    @OrderItemNumber = 'ITEM67890',
+    @ProductGroup = 'Clothing',
+    @ProductCode = 'PROD001',
+    @VariantCode = 'VAR001',
+    @Quantity = 2,
+    @UnitPrice = 50.00;
+
+--------------ERROR SCENERIO-----------------
+*Product group should be varchar, we changed it to integer value just to see how it look likes for error scenarios.*
+EXEC prCreateOrderItem 
+    @OrderNumber = 'ORD12345',
+    @OrderItemNumber = 'ITEM67890',
+    @ProductGroup = 123458,
+    @ProductCode = 'PROD001',
+    @VariantCode = 'VAR001',
+    @Quantity = 2,
+    @UnitPrice = 50.00;
+
+
+
