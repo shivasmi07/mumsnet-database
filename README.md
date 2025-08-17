@@ -31,7 +31,7 @@ The work was completed as part of an academic project and showcases **best pract
 - ER diagram showing relationships between **Customer, Product, Variant, Order, OrderItem**  
 
 ERD:  
-![ER Diagram](normalization/Images/ER-diagram.png)
+![ER Diagram](Normalization/Images/ERDiagram.png)
 
 ---
 
@@ -51,7 +51,7 @@ ERD:
 - Missing `VariantCode` → transaction rolled back with error  
 
 📊 Transaction Flow:  
-![Transaction Flow](normalization/Images/flow_execution.png)
+![Transaction Flow](Normalization/Images/Flow_Execution.png)
 
 **Impact** → Prevented data inconsistencies and ensured reliable database operations.  
 
@@ -68,7 +68,7 @@ The normalized schema was integrated into **SSAS** to build a cube for analytics
 - **Partitions** – improved cube processing  
 
 Cube Design:  
-![Cube Design](BI/Images/BI-star-schema-cube-design.png)
+![Cube Design](BI/Images/BI_star_schema_cube_design.png)
 
 ---
 
@@ -77,7 +77,7 @@ Cube Design:
 2. **Cancel Percentage** – ratio of cancelled orders (`StatusCode=3`) to total orders  
 
 Cancel Percentage Example:  
-![Cancel %](BI/Images/BI-measure-cancel-percentage.png)
+![Cancel %](BI/Images/BI_Cancel_Percentage.png)
 
 ---
 
@@ -85,7 +85,7 @@ Cancel Percentage Example:
 - **LogisticHierarchy** → Country → Region → City → Customer  
 
 📊 Screenshot:  
-![Hierarchy](BI/Images/bi-hierarchy-logistics.png)
+![Hierarchy](BI/Images/BI_hierarchy_logistics.png)
 
 ---
 
